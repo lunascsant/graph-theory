@@ -1,0 +1,4 @@
+strict graph Grafo {
+6 -- 7 -- 4; 
+}
+
