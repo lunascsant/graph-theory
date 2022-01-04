@@ -9,16 +9,15 @@ using namespace std;
 **************************************************************************************************/
 
 // Constructor
-Node::Node(int id){
-
+Node::Node(int id, int name){
     this->id = id;
     this->in_degree = 0;
     this->out_degree = 0;
-    this->weight = 0;
+    this->weight = 1;
     this->first_edge = nullptr;
     this->last_edge = nullptr;
     this->next_node = nullptr;
-
+    this->name = name;
 };
 
 // Destructor
@@ -52,6 +51,12 @@ Edge* Node::getLastEdge(){
 int Node::getId(){
 
     return this->id;
+
+}
+
+int Node::getName(){
+
+    return this->name;
 
 }
 
@@ -94,23 +99,25 @@ void Node::setWeight(float weight){
 }
 
 // Other methods
-void Node::insertEdge(int target_id, float weight){
-    // Verifies whether there are at least one edge in the node
-    if(this->first_edge != nullptr){
-        // Allocating the new edge and keeping the integrity of the edge list
-        Edge* edge = new Edge(target_id);
-        edge->setWeight(weight);
-        this->last_edge->setNextEdge(edge);
-        this->last_edge = edge;
+void Node::insertEdge(int target_id, int target_name, float weight){
 
-    }
-    else{
-         // Allocating the new edge and keeping the integrity of the edge list
-        this->first_edge = new Edge(target_id);
-        this->first_edge->setWeight(weight);
-        this->last_edge = this->first_edge;
+    // Grafo simples, se a aresta já existe eu não adiciono ela de novo
+    //if(!searchEdgeById(target_id)) {
+        // Verifies whether there are at least one edge in the node
+        if (this->first_edge != nullptr) {
+            // Allocating the new edge and keeping the integrity of the edge list
+            Edge* edge = new Edge(target_id, target_name);
+            edge->setWeight(weight);
+            this->last_edge->setNextEdge(edge);
+            this->last_edge = edge;
 
-    }
+        } else {
+            // Allocating the new edge and keeping the integrity of the edge list
+            this->first_edge = new Edge(target_id, target_name);
+            this->first_edge->setWeight(weight);
+            this->last_edge = this->first_edge;
+        }
+    //}
 
 }
 
@@ -125,7 +132,7 @@ void Node::removeAllEdges(){
 
             next = aux->getNextEdge();
             delete aux;
-
+            aux = next;
         }
 
     }
@@ -134,14 +141,14 @@ void Node::removeAllEdges(){
 
 }
 
-int Node::removeEdge(int id, bool directed, Node* target_node){
+int Node::removeEdge(int name, bool directed, Node* target_node){
     // Verifies whether the edge to remove is in the node
-    if(this->searchEdge(id)){
+    if(this->searchEdge(name)){
 
         Edge* aux = this->first_edge;
         Edge* previous = nullptr;
         // Searching for the edge to be removed
-        while(aux->getTargetId() != id){
+        while(aux->getTargetName() != name){
 
             previous = aux;
             aux = aux->getNextEdge();
@@ -180,8 +187,22 @@ int Node::removeEdge(int id, bool directed, Node* target_node){
 
 }
 
-bool Node::searchEdge(int target_id){
+bool Node::searchEdge(int target_name){
      // Verifies whether there are at least one edge in the node
+    if(this->first_edge != nullptr){
+        // Searching for a specific edge of target id equal to target id
+        for(Edge* aux = this->first_edge; aux != nullptr; aux = aux->getNextEdge())
+            if(aux->getTargetName() == target_name)
+                return true;
+
+    }
+
+    return false;
+
+}
+
+bool Node::searchEdgeById(int target_id){
+    // Verifies whether there are at least one edge in the node
     if(this->first_edge != nullptr){
         // Searching for a specific edge of target id equal to target id
         for(Edge* aux = this->first_edge; aux != nullptr; aux = aux->getNextEdge())
@@ -218,12 +239,12 @@ void Node::decrementOutDegree(){
 
 }
 
-Edge* Node::hasEdgeBetween(int target_id)
+Edge* Node::hasEdgeBetween(int target_name)
 {
 
     for(Edge *auxEdge = this->first_edge; auxEdge != nullptr; auxEdge = auxEdge->getNextEdge())
     {
-        if(auxEdge->getTargetId() == target_id)
+        if(auxEdge->getTargetName() == target_name)
             return auxEdge;
     }
     return nullptr;

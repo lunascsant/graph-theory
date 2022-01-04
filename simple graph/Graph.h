@@ -8,6 +8,7 @@
 #include <fstream>
 #include <stack>
 #include <list>
+#include <vector>
 
 using namespace std;
 
@@ -22,6 +23,8 @@ class Graph{
         bool weighted_node;
         Node* first_node;
         Node* last_node;
+        // Para auxiliar na indexação interna dos nós
+        int lastIdUsed;
 
     public:
         //Constructor
@@ -37,28 +40,33 @@ class Graph{
         Node* getFirstNode();
         Node* getLastNode();
         //Other methods
-        void insertNode(int id);
-        void insertEdge(int id, int target_id, float weight);
+        void insertNode(int id, int name);
+        void insertEdge(int name, int target_name, float weight);
         void removeNode(int id);
-        bool searchNode(int id);
-        Node* getNode(int id);
+        bool searchNode(int name);
+        bool searchNodeById(int id);
+        Node* getNode(int name);
+        Node* getNodeById(int id);
 
         //methods phase1
         void topologicalSorting();
-        void breadthFirstSearch(ofstream& output_file);
-        Graph* getVertexInduced(int* listIdNodes);
-        Graph* agmKruskal();
-        Graph* agmPrim();
-        float floydMarshall(int idSource, int idTarget);
-        float dijkstra(int idSource, int idTarget);
+        void breadthFirstSearch(int name, ofstream& output_file);
+        void getVertexInducedDirectTransitiveClosure(int name, ofstream& output_file);
+        void getVertexInducedIndirectTransitiveClosure(int name, ofstream& output_file);
+        Graph* algoritmoKruskal(int* vertices);
+        Graph* algoritmoPrim(int* vertices);
+        void floydWarshall(int nameSource, int nameTarget, ofstream& output_file);
+        void dijkstra(int nameSource, int nameTarget, ofstream& output_file);
 
         //methods phase1
-        float greed();
-        float greedRandom();
-        float greedReactiveRandom();
+        //float greed();
+        //float greedRandom();
+        //float greedReactiveRandom();
     private:
         //Auxiliar methods
-
+        void generatesDotLanguage(int pred[], ofstream& output_file);
+        void auxTopologycalSorting(int* time, int discovered[], int visited[], int predecessors[], int ind, int finished[], int topSort[], int* indArray, bool* ehCiclico);
+        bool find(vector <int> myVector, int wanted);
 };
 
 #endif // GRAPH_H_INCLUDED

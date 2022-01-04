@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include <math.h>
 #include <utility>
 #include <tuple>
@@ -30,34 +31,31 @@ Graph* leitura(ifstream& input_file, int directed, int weightedEdge, int weighte
     if(!graph->getWeightedEdge() && !graph->getWeightedNode()){
 
         while(input_file >> idNodeSource >> idNodeTarget) {
-
-            graph->insertEdge(idNodeSource, idNodeTarget, 0);
-
+            graph->insertEdge(idNodeSource, idNodeTarget, 1);
         }
 
-    }else if(graph->getWeightedEdge() && !graph->getWeightedNode() ){
+    } else if(graph->getWeightedEdge() && !graph->getWeightedNode() ){
 
         float edgeWeight;
 
         while(input_file >> idNodeSource >> idNodeTarget >> edgeWeight) {
 
             graph->insertEdge(idNodeSource, idNodeTarget, edgeWeight);
-
         }
 
-    }else if(graph->getWeightedNode() && !graph->getWeightedEdge()){
+    } else if(graph->getWeightedNode() && !graph->getWeightedEdge()){
 
         float nodeSourceWeight, nodeTargetWeight;
 
         while(input_file >> idNodeSource >> nodeSourceWeight >> idNodeTarget >> nodeTargetWeight) {
 
-            graph->insertEdge(idNodeSource, idNodeTarget, 0);
+            graph->insertEdge(idNodeSource, idNodeTarget, 1);
             graph->getNode(idNodeSource)->setWeight(nodeSourceWeight);
             graph->getNode(idNodeTarget)->setWeight(nodeTargetWeight);
 
         }
 
-    }else if(graph->getWeightedNode() && graph->getWeightedEdge()){
+    } else if(graph->getWeightedNode() && graph->getWeightedEdge()){
 
         float nodeSourceWeight, nodeTargetWeight, edgeWeight;
 
@@ -74,29 +72,6 @@ Graph* leitura(ifstream& input_file, int directed, int weightedEdge, int weighte
     return graph;
 }
 
-Graph* leituraInstancia(ifstream& input_file, int directed, int weightedEdge, int weightedNode){
-
-    //Variáveis para auxiliar na criação dos nós no Grafo
-    int idNodeSource;
-    int idNodeTarget;
-    int order;
-    int numEdges;
-
-    //Pegando a ordem do grafo
-    input_file >> order >> numEdges;
-
-    //Criando objeto grafo
-    Graph* graph = new Graph(order, directed, weightedEdge, weightedNode);
-
-    //Leitura de arquivo
-    while(input_file >> idNodeSource >> idNodeTarget) {
-
-        graph->insertEdge(idNodeSource, idNodeTarget, 0);
-
-    }
-
-    return graph;
-}
 
 int menu(){
 
@@ -104,16 +79,14 @@ int menu(){
 
     cout << "MENU" << endl;
     cout << "----" << endl;
-    cout << "[1] Subgrafo induzido por conjunto de vértices" << endl;
-    cout << "[2] Caminho Mínimo entre dois vértices - Dijkstra" << endl;
-    cout << "[3] Caminho Mínimo entre dois vértices - Floyd" << endl;
-    cout << "[4] Árvore Geradora Mínima de Prim" << endl;
-    cout << "[5] Árvore Geradora Mínima de Kruskal" << endl;
-    cout << "[6] Imprimir caminhamento em largura" << endl;
-    cout << "[7] Imprimir ordenacao topológica" << endl;
-    cout << "[8] Algoritmo Guloso" << endl;
-    cout << "[9] Algoritmo Guloso Randomizado " << endl;
-    cout << "[10] Algoritmo Guloso Randomizado Reativo" << endl;
+    cout << "[1] Subgrafo vertice-induzido pelo fecho transitivo direto" << endl;
+    cout << "[2] Subgrafo vertice-induzido pelo fecho transitivo indireto" << endl;
+    cout << "[3] Caminho Minimo entre dois vertices - Dijkstra" << endl;
+    cout << "[4] Caminho Minimo entre dois vertices - Floyd" << endl;
+    cout << "[5] Arvore Geradora Minima de Prim" << endl;
+    cout << "[6] Arvore Geradora Minima de Kruskal" << endl;
+    cout << "[7] Imprimir caminhamento em largura" << endl;
+    cout << "[8] Imprimir ordenacao topologica" << endl;
     cout << "[0] Sair" << endl;
 
     cin >> selecao;
@@ -126,46 +99,126 @@ void selecionar(int selecao, Graph* graph, ofstream& output_file){
 
     switch (selecao) {
 
-        //Subgrafo induzido por um conjunto de vértices X;
+        //Subgrafo vértice-induzido pelo fecho transitivo direto;
         case 1:{
 
+            int name;
+
+            cout << "Selecionado: Subgrafo vertice-induzido pelo fecho transitivo direto" << endl;
+            cout << "Digite a seguir o numero do vertice: " << endl;
+            cin >> name;
+
+            graph->getVertexInducedDirectTransitiveClosure(name, output_file);
+
+            cout << "Subgrafo produzido foi inserido no arquivo de saida." << endl;
             break;
         }
-            //Caminho mínimo entre dois vértices usando Dijkstra;
+        //Subgrafo vértice-induzido pelo fecho transitivo indireto;
         case 2:{
 
+            int name;
+
+            cout << "Selecionado: Subgrafo vertice-induzido pelo fecho transitivo indireto" << endl;
+            cout << "Digite a seguir o numero do vertice: " << endl;
+            cin >> name;
+
+            graph->getVertexInducedIndirectTransitiveClosure(name, output_file);
+
+            cout << "Subgrafo produzido foi inserido no arquivo de saida." << endl;
             break;
         }
-
-            //Caminho mínimo entre dois vértices usando Floyd;
+        //Caminho mínimo entre dois vértices usando Dijkstra;
         case 3:{
+            int idSource, idTarget;
+
+            cout << "Selecionado: Caminho minimo entre dois vertices usando Dijkstra" << endl;
+            cout << "Digite a seguir o numero do primeiro vertice (origem): " << endl;
+            cin >> idSource;
+            cout << "Digite a seguir o numero do segundo vertice (destino): " << endl;
+            cin >> idTarget;
+
+            graph->dijkstra(idSource, idTarget, output_file);
+
+            cout << "Caminho percorrido pelo algoritmo para encontrar o minimo entre os dois vertices usando Dijkstra foi inserido no arquivo de saida." << endl;
 
             break;
         }
-
-            //AGM - Kruscal;
+        //Caminho mínimo entre dois vértices usando Floyd;
         case 4:{
+            int idSource, idTarget;
 
+            cout << "Selecionado: Caminho minimo entre dois vertices usando Floyd" << endl;
+            cout << "Digite a seguir o id do primeiro vertice (origem): " << endl;
+            cin >> idSource;
+            cout << "Digite a seguir o id do segundo vertice (destino): " << endl;
+            cin >> idTarget;
 
+            graph->floydWarshall(idSource, idTarget, output_file);
+
+            cout << "Caminho percorrido pelo algoritmo para encontrar o minimo entre os dois vertices usando Floyd foi inserido no arquivo de saida." << endl;
 
             break;
         }
-
-            //AGM Prim;
+        //Algoritmo de Prim;
         case 5:{
+            /*int numVertices;
+            int id;
 
+            cout << "Selecionado: Algoritmo de Prim" << endl;
+            cout << "Digite o número de vertices: " << endl;
+            cin >> numVertices;
+
+            vector<int> vertices;
+            cout << "Digite cada vertice a seguir: " << endl;
+            for(int i = 0; i < numVertices; i++) {
+                cin >> id;
+                vertices.push_back(id);
+            }
+
+            graph->algoritmoPrim(vertices);*/
+
+            cout << "Algoritmo de Prim indisponivel." << endl;
             break;
         }
-
-            //Busca em largura;
+        //Algoritmo de Kruskal;
         case 6:{
+            /*int numVertices;
+            int id;
 
+            cout << "Selecionado: Algoritmo de Kruskal" << endl;
+            cout << "Digite o número de vertices: " << endl;
+            cin >> numVertices;
+
+            vector<int> vertices;
+            cout << "Digite cada vertice a seguir: " << endl;
+            for(int i = 0; i < numVertices; i++) {
+                cin >> id;
+                vertices.push_back(id);
+            }
+
+            graph->algoritmoKruskal(vertices);*/
+            cout << "Algoritmo de Kruskal indisponivel." << endl;
             break;
         }
-            //Ordenação Topologica;
+        //Busca em largura;
         case 7:{
 
+            int id;
+            cout << "Selecionado: Busca em largura" << endl;
+            cout << "Digite o numero do vertice: ";
+            cin >> id;
 
+            graph->breadthFirstSearch(id, output_file);
+            cout << "Busca em largura foi inserido no arquivo de saida." << endl;
+            break;
+        }
+        //Ordenação Topologica;
+       case 8:{
+            graph->topologicalSorting();
+            break;
+        }
+        case 0: {
+            cout << "EXIT" << endl;
             break;
         }
         default:
@@ -181,7 +234,7 @@ int mainMenu(ofstream& output_file, Graph* graph){
     int selecao = 1;
 
     while(selecao != 0){
-        system("clear");
+        // system("clear");
         selecao = menu();
 
         if(output_file.is_open())
@@ -221,19 +274,18 @@ int main(int argc, char const *argv[]) {
     //Abrindo arquivo de entrada
     ifstream input_file;
     ofstream output_file;
-    input_file.open(argv[1], ios::in);
-    output_file.open(argv[2], ios::out | ios::trunc);
+    input_file.open(argv[1]);
+    output_file.open(argv[2]);
 
 
 
     Graph* graph;
 
-    if(input_file.is_open()){
+    if (input_file.is_open()) {
 
-        graph = leituraInstancia(input_file, atoi(argv[3]), atoi(argv[4]), atoi(argv[5]));
+        graph = leitura(input_file, atoi(argv[3]), atoi(argv[4]), atoi(argv[5]));
 
-    }else
-        cout << "Unable to open " << argv[1];
+    } else cout << "Unable to open " << argv[1];
 
 
     mainMenu(output_file, graph);
