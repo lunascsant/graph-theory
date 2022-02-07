@@ -1,0 +1,48 @@
+Solution
+Cluster 0:
+1,   5,   63,   47,   64,   92,   65,   23,   41,   12,   82,   61,   26,   48,   45,   28,   10,   96,   51,   98,   88,   77,   69,   44,   27,   73,   93,   43,   90,   13,   57,   59,   11,   56,   89,   68,   94,   50,   24,   74,   17,   81,   35,   20,   6,   60,   40,   66,   52,   15,   72,   79,   32,   30,   83,   38,   33,   54,   39,   9,   49,   95,   
+Max value: 98
+Min value: 1
+QTD nodes cluster = 62
+SB GAP = 97
+IS GAP = 97
+
+
+Cluster 1:
+0,   29,   46,   80,   99,   84,   53,   42,   31,   76,   22,   
+Max value: 99
+Min value: 1
+QTD nodes cluster = 11
+SB GAP = 98
+IS GAP = 98
+
+
+Cluster 2:
+2,   18,   97,   36,   78,   91,   75,   37,   55,   19,   
+Max value: 98
+Min value: 3
+QTD nodes cluster = 10
+SB GAP = 95
+IS GAP = 95
+
+
+Cluster 3:
+3,   58,   86,   7,   16,   62,   25,   87,   70,   
+Max value: 91
+Min value: 5
+QTD nodes cluster = 9
+SB GAP = 86
+IS GAP = 86
+
+
+Cluster 4:
+4,   8,   67,   71,   14,   34,   21,   85,   
+Max value: 89
+Min value: 6
+QTD nodes cluster = 8
+SB GAP = 83
+IS GAP = 83
+
+
+WB GAP TOTAL = 459
+Qualidade da solução: 40728

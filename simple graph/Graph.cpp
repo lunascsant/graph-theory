@@ -14,6 +14,10 @@
 #include <vector>
 #include <iterator>
 #include <climits>
+#include "Solution.h"
+#include "Cluster.h"
+#include "NodeCluster.h"
+#include "sorting.h"
 
 using namespace std;
 
@@ -31,6 +35,18 @@ Graph::Graph(int order, bool directed, bool weighted_edge, bool weighted_node)
     this->first_node = this->last_node = nullptr;
     this->number_edges = 0;
     this->lastIdUsed = -1;
+}
+
+Graph::Graph(int order, bool directed, bool weighted_edge, bool weighted_node, int clusters)
+{
+    this->order = order;
+    this->directed = directed;
+    this->weighted_edge = weighted_edge;
+    this->weighted_node = weighted_node;
+    this->first_node = this->last_node = nullptr;
+    this->number_edges = 0;
+    this->lastIdUsed = -1;
+    this->num_clusters = clusters;
 }
 
 // Destructor
@@ -93,15 +109,23 @@ Node *Graph::getLastNode()
     return this->last_node;
 }
 
+int Graph::getLastIdUsed() {
+    return this->lastIdUsed;
+}
+
+void Graph::setLastIdUsed(int newLastId) {
+    this->lastIdUsed = newLastId;
+}
+
 // Other methods
 /*
     The outdegree attribute of nodes is used as a counter for the number of edges in the graph.
     This allows the correct updating of the numbers of edges in the graph being directed or not.
 */
-void Graph::insertNode(int id, int name)
+void Graph::insertNode(int id, int name, int weight)
 {
     if(!searchNode(name)) {
-        Node* newNode = new Node(id, name);
+        Node* newNode = new Node(id, name, weight);
         if(first_node == nullptr) {
             first_node = newNode;
         } else {
@@ -112,7 +136,7 @@ void Graph::insertNode(int id, int name)
 
 }
 
-void Graph::insertEdge(int name, int target_Name, float weight)
+void Graph::insertEdge(int name, int target_Name, int weight)
 {
     //cout << "----------------- INSERINDO -----------------" << endl;
     Node* nodeOrigem = getNode(name);
@@ -131,7 +155,7 @@ void Graph::insertEdge(int name, int target_Name, float weight)
     } else if (nodeOrigem != nullptr && nodeDestino == nullptr){
         // cout << "Vem no destino null" << endl;
         lastIdUsed++;
-        this->insertNode(lastIdUsed, target_Name);
+        this->insertNode(lastIdUsed, target_Name, weight);
         Node* newNodeDestino = getNode(target_Name);
         nodeOrigem->insertEdge(newNodeDestino->getId(), target_Name, weight);
 
@@ -144,7 +168,7 @@ void Graph::insertEdge(int name, int target_Name, float weight)
     } else if (nodeOrigem == nullptr && nodeDestino != nullptr){
         // cout << "Vem no origem null" << endl;
         lastIdUsed++;
-        this->insertNode(lastIdUsed, name);
+        this->insertNode(lastIdUsed, name, weight);
         Node* newNodeOrigem = getNode(name);
 
         newNodeOrigem->insertEdge(nodeDestino->getId(), target_Name, weight);
@@ -159,10 +183,10 @@ void Graph::insertEdge(int name, int target_Name, float weight)
     } else {
         // cout << "Vem nos dois null " << endl;
         lastIdUsed++;
-        this->insertNode(lastIdUsed, name);
+        this->insertNode(lastIdUsed, name, weight);
         Node* newNodeOrigem = getNode(name);
         lastIdUsed++;
-        this->insertNode(lastIdUsed, target_Name);
+        this->insertNode(lastIdUsed, target_Name, weight);
         Node* newNodeDestino = getNode(target_Name);
 
         newNodeOrigem->insertEdge(newNodeDestino->getId(), target_Name, weight);
@@ -304,6 +328,10 @@ void Graph::getVertexInducedDirectTransitiveClosure(int name, ofstream& output_f
     }
 }
 
+int Graph::getNumClusters() {
+    return this->num_clusters;
+}
+
 
 void Graph::getVertexInducedIndirectTransitiveClosure(int name, ofstream& output_file) {
     if (this->getDirected()){
@@ -425,8 +453,13 @@ void Graph::breadthFirstSearch(int name, ofstream& output_file) {
 
 
 
-void Graph::floydWarshall(int nameSource, int nameTarget, ofstream& output_file) {
-    int v = this->getOrder();
+int** Graph::floydWarshall(int nameSource, int nameTarget, ofstream& output_file) {
+    int rows = this->order, cols = this->order;
+    int** costPaths = new int*[rows];
+    for (int i = 0; i < rows; ++i)
+        costPaths[i] = new int[cols];
+
+    int v = this->order;
     int dist[v][v];
     int pred[v][v];
     vector<int> visited;
@@ -480,7 +513,7 @@ void Graph::floydWarshall(int nameSource, int nameTarget, ofstream& output_file)
     }
 
 
-    int size = visited.size() - 1;
+    /*int size = visited.size() - 1;
     Node* auxNode = this->getNodeById(visited[size]);
     output_file << "strict graph Grafo {\n";
     output_file << auxNode->getName();
@@ -491,8 +524,15 @@ void Graph::floydWarshall(int nameSource, int nameTarget, ofstream& output_file)
     }
     output_file << "; \n}";
 
-    cout << "O custo do caminho minimo: " << dist[sourceId][targetId] << endl;
+    cout << "O custo do caminho minimo: " << dist[sourceId][targetId] << endl;*/
 
+    for (int i = 0; i < v; i++) {
+        for (int j = 0; j < v; j++) {
+            costPaths[i][j] = dist[i][j];
+        }
+    }
+
+    return costPaths;
 }
 
    
@@ -674,15 +714,6 @@ void Graph::auxTopologycalSorting(int* time, int discovered[], int visited[], in
     *indArray = *indArray + 1;
 }
 
-/*
-Graph* Graph::algoritmoKruskal(int* vertices) {
-
-}
-
-Graph* Graph::algoritmoPrim(int* vertices) {
-
-}*/
-
 void Graph::generatesDotLanguage(int pred[], ofstream& output_file) {
     Node* auxNode;
     Node* auxPred;
@@ -695,4 +726,332 @@ void Graph::generatesDotLanguage(int pred[], ofstream& output_file) {
         }
     }
     output_file << "}";
+}
+
+void Graph::fillCandidatesList(vector<NodeCluster*> *candidatesList, Solution *sol) {
+    // o tamanho da candidatesList será partições * num de nós
+
+    for(int i = 0; i < this->order; i++) {
+        for (int j = 0; j < this->getNumClusters(); j++) {
+            candidatesList->push_back(new NodeCluster(this->getNodeById(i), sol->getClusterById(j)));
+        }
+    }
+}
+
+void Graph::preProcessing(Solution* sol, vector<NodeCluster*>* candidatesList) {
+    int vectorNodes[this->order];
+    int vectorWeights[this->order];
+
+    for (int i = 0; i < this->order; i++) {
+        vectorNodes[i] = i;
+        vectorWeights[i] = this->getNodeById(i)->getWeight();
+    }
+
+    quickssort(vectorWeights, vectorNodes, this->order);
+
+    for (int i = 0; i < this->num_clusters; i++) {
+        sol->addNodeCluster(vectorNodes[i], this->getNodeById(vectorNodes[i])->getWeight(), i);
+        updateCandidatesListCaseNode(candidatesList, vectorNodes[i]);
+    }
+
+    updateCandidatesListQuotioent(candidatesList);
+}
+
+void Graph::sortCandidatesList(vector<NodeCluster *> *candidatesList) {
+    int vectorNodesCluster[candidatesList->size()];
+    int vectorQuotients[candidatesList->size()];
+    vector<NodeCluster*> auxiliar;
+
+    for (int i = 0; i < candidatesList->size(); i++) {
+        vectorNodesCluster[i] = i;
+        vectorQuotients[i] = candidatesList->at(i)->getQuotient();
+    }
+
+    quickssort(vectorQuotients, vectorNodesCluster, candidatesList->size());
+
+    for (int i = 0; i < candidatesList->size(); i++) {
+        auxiliar.push_back(candidatesList->at(vectorNodesCluster[i]));
+    }
+
+    int seraoApagados = candidatesList->size();
+
+    for (int i = 0; i < auxiliar.size(); i++) {
+        candidatesList->push_back(auxiliar.at(i));
+    }
+
+    for (int i = 0; i < seraoApagados; i++) {
+        candidatesList->erase(candidatesList->begin());
+    }
+}
+
+void Graph::updateCandidatesListCaseCluster(vector<NodeCluster*> *candidatesList, int clusterId) {
+    vector<NodeCluster*> auxiliar;
+
+    for (int i = 0; i < candidatesList->size(); i++) {
+        if (candidatesList->at(i)->getCluster()->getId() != clusterId) {
+            auxiliar.push_back(candidatesList->at(i));
+        }
+    }
+
+    int seraoApagados = candidatesList->size();
+
+    for (int i = 0; i < auxiliar.size(); i++) {
+        candidatesList->push_back(auxiliar.at(i));
+    }
+
+    for (int i = 0; i < seraoApagados; i++) {
+        candidatesList->erase(candidatesList->begin());
+    }
+}
+
+void Graph::updateCandidatesListCaseNode(vector<NodeCluster*> *candidatesList, int nodeId) {
+    vector<NodeCluster*> auxiliar;
+
+    for (int i = 0; i < candidatesList->size(); i++) {
+        if (candidatesList->at(i)->getNode()->getId() != nodeId) {
+            auxiliar.push_back(candidatesList->at(i));
+        }
+    }
+
+    int seraoApagados = candidatesList->size();
+
+    for (int i = 0; i < auxiliar.size(); i++) {
+        candidatesList->push_back(auxiliar.at(i));
+    }
+
+    for (int i = 0; i < seraoApagados; i++) {
+        candidatesList->erase(candidatesList->begin());
+    }
+}
+
+void Graph::updateCandidatesListQuotioent(vector<NodeCluster*>* candidatesList) {
+    for (int i = 0; i < candidatesList->size(); i++) {
+        candidatesList->at(i)->calcQuotient();
+    }
+}
+
+void Graph::vectorInitialization(float *P, float *A, float *S, float *Q, int numAlphas){
+    for (int i = 0; i < numAlphas; i++) {
+        P[i] = 1;
+        A[i] = 0;
+        S[i] = 0;
+        Q[i] = 0;
+    }
+}
+
+void Graph::updateProbabilities(float *P, float *A, Solution* solBest, int numAlphas){
+    float *Q = new float[numAlphas];
+    float sumQ = 0;
+
+    for (int i  = 0; i < numAlphas; i++) {
+        if (A[i] != 0)
+            Q[i] = (solBest->getTotalGAP()) / A[i];
+        else
+            Q[i] = 0;
+        Q[i] = pow(Q[i], 10);
+        sumQ = sumQ + Q[i];
+    }
+
+    for (int i  = 0; i < numAlphas; i++) {
+        if (sumQ != 0)
+            P[i] = Q[i] / sumQ;
+        else
+            P[i] = 0;
+    }
+
+    delete Q;
+}
+
+int Graph::chooseAlpha(float *P, int numAlphas) {
+    float largerProb = P[0];
+    int indLarger = 0;
+    for (int i = 1; i < numAlphas; i++) {
+        if (P[i] > largerProb) {
+            largerProb = P[i];
+            indLarger = i;
+        }
+    }
+
+    return indLarger;
+}
+
+void Graph::updateAverages(float *A, float *S, float *Q, Solution* sol, int alpha) {
+    S[alpha] += sol->getTotalGAP();
+    Q[alpha] += 1;
+    A[alpha] = S[alpha] / Q[alpha];
+}
+
+Solution* Graph::greedy() {
+
+    float c = (float(this->getOrder())) / (2 * float(this->getNumClusters()));
+    int uppLimit = ceil((c * this->getOrder()) / this->getNumClusters());
+
+    Solution *solution = new Solution(this->num_clusters, this->order, uppLimit);
+    vector<NodeCluster*> candidatesList;
+
+    fillCandidatesList(&candidatesList, solution);
+
+    preProcessing(solution, &candidatesList);
+
+    while(!candidatesList.empty()) {
+        NodeCluster* candidate = candidatesList.at(0);
+        if(candidate->getCluster()->qtyNodes() < uppLimit) {
+            // coloca candidato na solução
+            solution->addNodeCluster(candidate->getNode()->getId(),
+                                     candidate->getNode()->getWeight(), candidate->getCluster()->getId());
+
+            // remove candidatos com mesmo nó da lista
+            updateCandidatesListCaseNode(&candidatesList, candidate->getNode()->getId());
+            // atualiza lista
+            updateCandidatesListQuotioent(&candidatesList);
+            sortCandidatesList(&candidatesList);
+        } else {
+            // remove os candidatos com mesmo cluster
+            updateCandidatesListCaseCluster(&candidatesList, candidate->getCluster()->getId());
+        }
+    }
+
+
+
+    for(int i = 0; i < candidatesList.size(); i++){
+        // deleta os NodeClusters alocados
+        delete candidatesList.at(i);
+    }
+
+    return solution;
+}
+
+int Graph::randomInteger(int low, int high)
+{
+    srand (time(NULL));
+    double d;
+    d = (double) rand () / ((double) RAND_MAX + 1);
+    int k = d * (high - low + 1);
+    return low + k;
+}
+
+Solution *Graph::greedyRandom(float alpha, int numIt) {
+    float c = (float(this->getOrder())) / (2 * float(this->getNumClusters()));
+    int uppLimit = ceil((c * this->getOrder()) / this->getNumClusters());
+
+    Solution *solution;
+    Solution *bestSolution;
+    vector<NodeCluster*> candidatesList;
+
+    int i, k;
+    i = 0;
+
+    bestSolution = this->greedy();
+    int bestSolutionGap = bestSolution->getTotalGAP();
+
+    while(i < numIt) {
+        i++;
+
+        solution = new Solution(this->num_clusters, this->order, uppLimit);
+        fillCandidatesList(&candidatesList, solution);
+        preProcessing(solution, &candidatesList);
+        sortCandidatesList(&candidatesList);
+
+        while (!candidatesList.empty()) {
+            k = randomInteger(0, (alpha * (candidatesList.size() - 1)));
+            //cout << "valor de k " << k << endl;
+            NodeCluster* candidate = candidatesList.at(k);
+            if(candidate->getCluster()->qtyNodes() < uppLimit) {
+                // coloca candidato na solução
+                solution->addNodeCluster(candidate->getNode()->getId(),
+                                         candidate->getNode()->getWeight(), candidate->getCluster()->getId());
+
+                // remove candidatos com mesmo nó da lista
+                updateCandidatesListCaseNode(&candidatesList, candidate->getNode()->getId());
+                // atualiza lista
+                updateCandidatesListQuotioent(&candidatesList);
+                sortCandidatesList(&candidatesList);
+            } else {
+                // remove os candidatos com mesmo cluster
+                updateCandidatesListCaseCluster(&candidatesList, candidate->getCluster()->getId());
+            }
+        }
+
+        if (solution->getTotalGAP() < bestSolution->getTotalGAP()) {
+            bestSolution = solution;
+        }
+    }
+
+    for(int i = 0; i < candidatesList.size(); i++){
+        // deleta os NodeClusters alocados
+        delete candidatesList.at(i);
+    }
+
+    return bestSolution;
+}
+
+Solution *Graph::greedReactiveRandom(float *alphas, int numIt, int bloco, int numAlphas) {
+    float c = (float(this->getOrder())) / (2 * float(this->getNumClusters()));
+    int uppLimit = ceil((c * this->getOrder()) / this->getNumClusters());
+
+    Solution* bestSolution = this->greedy();
+    Solution* solution;
+
+    vector<NodeCluster*> candidatesList;
+
+    fillCandidatesList(&candidatesList, solution);
+
+    int i, k;
+    i = 0;
+    int alpha;
+
+    float *prob = new float[numAlphas];
+    float *average = new float[numAlphas];
+    float *somaQualities = new float [numAlphas];
+    float *qtyQualities = new float [numAlphas];
+
+    // inicializaVetores
+    vectorInitialization(prob, average, somaQualities, qtyQualities, numAlphas);
+
+
+    while(i < numIt) {
+        /* quicksort(candidatesList, candidatesList->size()); */
+        if (i % bloco == 0)
+            updateProbabilities(prob, average, bestSolution, numAlphas);
+
+        i++;
+
+        solution = new Solution(this->num_clusters, this->order, uppLimit);
+        fillCandidatesList(&candidatesList, solution);
+        preProcessing(solution, &candidatesList);
+        sortCandidatesList(&candidatesList);
+
+        alpha = chooseAlpha(prob, numAlphas);
+        while (!candidatesList.empty()) {
+            k = randomInteger(0, (alpha * (candidatesList.size() - 1)));
+            //cout << "valor de k " << k << endl;
+            NodeCluster* candidate = candidatesList.at(k);
+            if(candidate->getCluster()->qtyNodes() < uppLimit) {
+                // coloca candidato na solução
+                solution->addNodeCluster(candidate->getNode()->getId(),
+                                         candidate->getNode()->getWeight(), candidate->getCluster()->getId());
+
+                // remove candidatos com mesmo nó da lista
+                updateCandidatesListCaseNode(&candidatesList, candidate->getNode()->getId());
+                // atualiza lista
+                updateCandidatesListQuotioent(&candidatesList);
+                sortCandidatesList(&candidatesList);
+            } else {
+                // remove os candidatos com mesmo cluster
+                updateCandidatesListCaseCluster(&candidatesList, candidate->getCluster()->getId());
+            }
+        }
+
+        updateAverages(average, somaQualities, qtyQualities, solution, alpha);
+        if (solution->getTotalGAP() < bestSolution->getTotalGAP()) {
+            bestSolution = solution;
+        }
+    }
+
+    delete prob;
+    delete average;
+    delete somaQualities;
+    delete qtyQualities;
+
+    return bestSolution;
 }

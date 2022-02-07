@@ -19,14 +19,14 @@ class Node{
         int id;
         unsigned int in_degree;
         unsigned int out_degree;
-        float weight;
+        int weight;
         Node* next_node;
         // esse atributo é o número que aparece nas instâncias
         int name;
 
     public:
         // Constructor
-        Node(int id, int name);
+        Node(int id, int name, int weight);
         // Destructor
         ~Node();
         // Getters
@@ -36,15 +36,15 @@ class Node{
         int getName();
         int getInDegree();
         int getOutDegree();
-        float getWeight();
+        int getWeight();
         Node* getNextNode();
         // Setters
         void setNextNode(Node* node);
-        void setWeight(float weight);
+        void setWeight(int weight);
         // Other methods
         bool searchEdge(int target_name);
         bool searchEdgeById(int target_name);
-        void insertEdge(int target_id, int target_name, float weight);
+        void insertEdge(int target_id, int target_name, int weight);
         void removeAllEdges();
         int removeEdge(int id, bool directed, Node* target_node);
         void incrementOutDegree();

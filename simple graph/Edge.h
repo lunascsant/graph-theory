@@ -15,21 +15,21 @@ class Edge{
         int target_id;
         int target_name;
         Edge* next_edge;
-        float weight;
+        int weight;
 
     public:
         // Constructor
-        Edge(int target_id, int target_name);
+        Edge(int target_id, int target_name, int weight);
         // Destructor
         ~Edge();
         // Getters
         int getTargetName();
         int getTargetId();
         Edge* getNextEdge();
-        float getWeight();
+        int getWeight();
         // Setters
         void setNextEdge(Edge* edge);
-        void setWeight(float weight); 
+        void setWeight(int weight);
 
 }; 
 

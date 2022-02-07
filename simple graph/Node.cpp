@@ -9,7 +9,7 @@ using namespace std;
 **************************************************************************************************/
 
 // Constructor
-Node::Node(int id, int name){
+Node::Node(int id, int name, int weight){
     this->id = id;
     this->in_degree = 0;
     this->out_degree = 0;
@@ -18,6 +18,7 @@ Node::Node(int id, int name){
     this->last_edge = nullptr;
     this->next_node = nullptr;
     this->name = name;
+    this->weight = weight;
 };
 
 // Destructor
@@ -72,7 +73,7 @@ int Node::getOutDegree(){
 
 }
 
-float Node::getWeight(){
+int Node::getWeight(){
 
     return this->weight;
 
@@ -92,28 +93,26 @@ void Node::setNextNode(Node* next_node){
 
 }
 
-void Node::setWeight(float weight){
-
+void Node::setWeight(int weight){
     this->weight = weight;
-
 }
 
 // Other methods
-void Node::insertEdge(int target_id, int target_name, float weight){
+void Node::insertEdge(int target_id, int target_name, int weight){
 
     // Grafo simples, se a aresta já existe eu não adiciono ela de novo
     //if(!searchEdgeById(target_id)) {
         // Verifies whether there are at least one edge in the node
         if (this->first_edge != nullptr) {
             // Allocating the new edge and keeping the integrity of the edge list
-            Edge* edge = new Edge(target_id, target_name);
+            Edge* edge = new Edge(target_id, target_name, weight);
             edge->setWeight(weight);
             this->last_edge->setNextEdge(edge);
             this->last_edge = edge;
 
         } else {
             // Allocating the new edge and keeping the integrity of the edge list
-            this->first_edge = new Edge(target_id, target_name);
+            this->first_edge = new Edge(target_id, target_name, weight);
             this->first_edge->setWeight(weight);
             this->last_edge = this->first_edge;
         }

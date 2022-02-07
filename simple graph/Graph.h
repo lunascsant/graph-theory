@@ -9,6 +9,10 @@
 #include <stack>
 #include <list>
 #include <vector>
+#include "Solution.h"
+#include "NodeCluster.h"
+#include "Cluster.h"
+
 
 using namespace std;
 
@@ -23,12 +27,14 @@ class Graph{
         bool weighted_node;
         Node* first_node;
         Node* last_node;
+        int num_clusters;
         // Para auxiliar na indexação interna dos nós
         int lastIdUsed;
 
     public:
         //Constructor
         Graph(int order, bool directed, bool weighted_edge, bool weighted_node);
+        Graph(int order, bool directed, bool weighted_edge, bool weighted_node, int clusters);
         //Destructor
         ~Graph();
         //Getters
@@ -37,11 +43,14 @@ class Graph{
         bool getDirected();
         bool getWeightedEdge();
         bool getWeightedNode();
+        int getNumClusters();
         Node* getFirstNode();
         Node* getLastNode();
+        int getLastIdUsed();
+        void setLastIdUsed(int newLastId);
         //Other methods
-        void insertNode(int id, int name);
-        void insertEdge(int name, int target_name, float weight);
+        void insertNode(int id, int name, int weight);
+        void insertEdge(int name, int target_name, int weight);
         void removeNode(int id);
         bool searchNode(int name);
         bool searchNodeById(int id);
@@ -55,18 +64,31 @@ class Graph{
         void getVertexInducedIndirectTransitiveClosure(int name, ofstream& output_file);
         Graph* algoritmoKruskal(int* vertices);
         Graph* algoritmoPrim(int* vertices);
-        void floydWarshall(int nameSource, int nameTarget, ofstream& output_file);
+        int** floydWarshall(int nameSource, int nameTarget, ofstream& output_file);
         void dijkstra(int nameSource, int nameTarget, ofstream& output_file);
 
-        //methods phase1
-        //float greed();
-        //float greedRandom();
-        //float greedReactiveRandom();
+        //methods phase2
+        Solution* greedy();
+        Solution* greedyRandom(float alpha, int numIt);
+        Solution* greedReactiveRandom(float* alphas, int numIt, int bloco, int numAlphas);
     private:
         //Auxiliar methods
         void generatesDotLanguage(int pred[], ofstream& output_file);
         void auxTopologycalSorting(int* time, int discovered[], int visited[], int predecessors[], int ind, int finished[], int topSort[], int* indArray, bool* ehCiclico);
         bool find(vector <int> myVector, int wanted);
+
+        // methods phase2
+        void fillCandidatesList(vector<NodeCluster*> *candidatesList, Solution *sol);
+        void preProcessing(Solution* sol, vector<NodeCluster*>* candidatesList);
+        void sortCandidatesList(vector<NodeCluster*>* candidatesList);
+        void updateCandidatesListCaseCluster(vector<NodeCluster*> *candidatesList, int clusterId);
+        void updateCandidatesListCaseNode(vector<NodeCluster*> *candidatesList, int nodeId);
+        void updateCandidatesListQuotioent(vector<NodeCluster*>* candidatesList);
+        int randomInteger(int low, int high);
+        void vectorInitialization(float *P, float *A, float *S, float *Q, int numAlphas);
+        void updateProbabilities(float *P, float *A, Solution* solBest, int numAlphas);
+        int chooseAlpha(float *P, int numAlphas);
+        void updateAverages(float *A, float *S, float *Q, Solution* sol, int alpha);
 };
 
 #endif // GRAPH_H_INCLUDED
